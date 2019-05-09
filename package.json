@@ -1,0 +1,37 @@
+{
+  "name": "paper-journal-wp",
+  "version": "1.0.0",
+  "description": "The WordPress theme for Paper Journal",
+  "main": "index.js",
+  "scripts": {
+    "server:start": "sudo docker-compose start",
+    "server:stop": "sudo docker-compose stop",
+    "prebuild": "del-cli dist/ -f && mkdir dist/ && mkdir dist/paper-journal-wp/ && mkdir dist/paper-journal-wp/assets/",
+    "build:img": "cp -r src/assets/img/ dist/paper-journal-wp/assets/img/ && mv dist/paper-journal-wp/assets/img/screenshot.png dist/paper-journal-wp/screenshot.png",
+    "build:fonts": "cp -r src/assets/fonts/ dist/paper-journal-wp/assets/fonts/",
+    "build:js": "mkdir dist/paper-journal-wp/assets/js/ && uglifyjs src/assets/js/*.js -m -c -o dist/paper-journal-wp/assets/js/main.min.js",
+    "build:css": "cleancss -O1 -O2 -o dist/paper-journal-wp/style.css src/assets/css/style.css src/assets/css/*.css",
+    "build:php": "cp src/*.php dist/paper-journal-wp/",
+    "build:swjs": "cp src/sw.js dist/paper-journal-wp/",
+    "build": "npm run server:stop && npm run build:img && npm run build:fonts && npm run build:php && npm run build:swjs && npm run build:js && npm run build:css && npm run server:start",
+    "zip": "cd /home/jacob/Projects/paper-journal-wp/dist/ && zip -r -o paper-journal-wp.zip .",
+    "prezip": "npm run build",
+    "postinstall": "mkdir dist/ && npm run zip"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/jclwilson/paper-journal-wp.git"
+  },
+  "keywords": [
+    "WordPress"
+  ],
+  "author": "Jacob Charles Wilson",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/jclwilson/paper-journal-wp/issues"
+  },
+  "homepage": "https://github.com/jclwilson/paper-journal-wp#readme",
+  "devDependencies": {
+    "del-cli": "latest"
+  }
+}
