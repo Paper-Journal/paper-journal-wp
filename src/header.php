@@ -1,20 +1,55 @@
 <!DOCTYPE html>
-<!-- Set lang attribute according to blog default -->
 <html <?php language_attributes(); ?>>
 <head>
     <meta charset="<?php bloginfo('charset'); ?>">
 	<meta name="viewport" content="width=device-width, initial-scale=1.0">
 	<meta http-equiv="X-UA-Compatible" content="ie=edge">
-    <title>Paper Journal</title>
-    <base href="<?php bloginfo('url'); ?>">
-    <meta name="description" content="<?php bloginfo('description'); ?>">
+    <title><?php wp_title('&laquo;', true, 'right'); ?> <?php bloginfo('name'); ?></title>
+    <?php wp_head(); ?>
+	<link rel="stylesheet" href="<?php bloginfo('stylesheet_url'); ?>"/>
+	<link rel="alternate" type="application/rss+xml" title="<?php bloginfo('name'); ?> RSS Feed" href="<?php bloginfo('rss2_url'); ?>" />
+    <link rel="pingback" href="<?php bloginfo('pingback_url'); ?>" />
     <link href="http://gmpg.org/xfn/11" rel="profile" />
-    <link href="<?php bloginfo( 'pingback_url' ); ?>" rel="pingback" />
-    <style>
-        .grid {display: grid;}
-    </style>
 </head>
-<body>
-    <header>
+<body <?php body_class(); ?>>
+<!-- Google Tag Manager (noscript) -->
+<noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-N9SJP9D"
+height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
+<!-- End Google Tag Manager (noscript) -->
+<div id="wrapper">
+    <header class="header">
+		<div class="header__logo">
+		<?php
+			if ( function_exists( 'the_custom_logo' ) ) {
+    			the_custom_logo();
+			} else { ?>
+				<a href="<?php bloginfo('url'); ?>"><img src="http://paper-journal.com/wp-content/uploads/2015/06/paper-logo.jpg" class="logo" alt="Paper Journal" /></a>
+        <?php } ?>
+		</div>
+        <nav class="header__nav no-print">
+			<h2 class="no-show">Menu</h2>
+            <?php wp_nav_menu('menu=header_menu&container=false&menu_id=menu'); ?>
+        </nav>
+		<h2 class="no-show no-print">Shop</h2>
+    	<ul class="pj-woocommerce__cart no-print">
+			<?php if ( is_user_logged_in() ) { ?>
+ 				<li class="shop__account"><a href="<?php echo get_permalink( get_option('woocommerce_myaccount_page_id') ); ?>" title="<?php _e('My Account','woothemes'); ?>"><?php _e('My Account','woothemes'); ?></a></li>
+ 			<?php } else { ?>
+ 				<li class="shop__account"><a href="<?php echo get_permalink( get_option('woocommerce_myaccount_page_id') ); ?>" title="<?php _e('Login / Register','woothemes'); ?>"><?php _e('Login / Register','woothemes'); ?></a></li>
+ 			<?php } ?>
+			<!-- Display categories -->
+			<?php $prod_cat_args = array(
+			  'taxonomy'     => 'product_cat', //woocommerce
+			  'orderby'      => 'name',
+			  'empty'        => 0
+			);
+			$woo_categories = get_categories( $prod_cat_args );
+			foreach ( $woo_categories as $woo_cat ) {
+				$woo_cat_id = $woo_cat->term_id; //category ID
+				$woo_cat_name = $woo_cat->name; //category name
+				$woo_cat_slug = $woo_cat->slug; //category slug
+				echo '<li class="shop__category"><a href="' . get_term_link( $woo_cat_slug, 'product_cat' ) . '">' . $woo_cat_name . '</a></li>';
+			} ?><!-- Ends display categories -->
+			<li class="shop__cart"><a class="pj-woocommerce__cart-count" href="<?php echo wc_get_cart_url(); ?>" title="<?php _e( 'View your shopping cart' ); ?>"><?php echo sprintf ( _n( '%d item', '%d items', WC()->cart->get_cart_contents_count() ), WC()->cart->get_cart_contents_count() ); ?> - <?php echo WC()->cart->get_cart_total(); ?></a></li>
+		</ul>
     </header>
-    <main>
