@@ -1,19 +1,89 @@
 <?php
 
-function featured_image_in_feed( $content ) {
-	global $post;
-	if( is_feed() ) {
-		if ( has_post_thumbnail( $post->ID ) ){
-			$output = get_the_post_thumbnail( $post->ID, 'medium');
-			$content = $output . $content;
+function paperjournal_conditional_js() {
+	
+	// Enqueue tag manager on all pages 
+	wp_enqueue_script( 'tag-manager', get_stylesheet_directory_uri() . '/js/tag-manager.js', array(), null, false);
+	
+	// If IS post or page
+	if( is_singular() ) {
+		// Enqueue noframe only on posts and pages
+		wp_enqueue_script( 'reframe', get_stylesheet_directory_uri() . '/js/reframe.min.js', array(), '3.0.0', true);
+	} 
+	
+	// If NOT a post or page
+	if ( ! is_singular() ) {
+		// If not post or page
+		// Dequeue woocommerce blocks if not on a post or page
+		wp_dequeue_style('wc-block-vendors-style');
+		wp_deregister_style( 'wc-block-vendors-style' );
+		wp_dequeue_style('wp-block-library');
+		wp_deregister_style( 'wp-block-library' );
+	//	wp_dequeue_style('block-gallery-frontend');
+	//	wp_deregister_style( 'block-gallery-frontend' );
+	
+		// Enqueue infinite scroll only on index pages
+		wp_enqueue_script( 'infinite-scroll', get_stylesheet_directory_uri() . '/js/infinite-scroll.pkgd.min.js', array(), null, true);
+		wp_enqueue_script( 'infinite-init', get_stylesheet_directory_uri() . '/js/infinite-scroll.init.js', array(), null, true);
+	}
+	
+	// Dequeue recaptcha if logged in or not on a page
+	if( is_user_logged_in() || ! is_page() ){
+		wp_dequeue_script( 'google-invisible-recaptcha' );
+	}
+	
+	// WooCommerce
+	// Check if WooCommerce plugin is active
+	if( function_exists( 'is_woocommerce' ) ){
+
+		// Check if it's any of WooCommerce page
+		if( ! is_woocommerce() && ! is_cart() && ! is_checkout() && ! is_shop() ) {         
+
+			## Dequeue WooCommerce styles
+			wp_dequeue_style('woocommerce-layout'); 
+			wp_dequeue_style('woocommerce-general'); 
+			wp_dequeue_style('woocommerce-smallscreen');
+
+			## Dequeue WooCommerce scripts
+			wp_dequeue_script('wc-cart-fragments');
+			wp_dequeue_script('woocommerce'); 
+			wp_dequeue_script('wc-add-to-cart'); 
+			wp_deregister_script( 'js-cookie' );
+			wp_dequeue_script( 'js-cookie' );
+			wp_dequeue_script( 'vc_woocommerce-add-to-cart-js' );
+			
+			// Remove paypal
+			wp_dequeue_style('wc-gateway-ppec-frontend');
+			wp_deregister_style( 'wc-gateway-ppec-frontend' );
 		}
 	}
-	return $content;
 }
-// add_filter( 'the_content', 'featured_image_in_feed' );
+add_action('wp_enqueue_scripts', 'paperjournal_conditional_js');
 
+// 100% quality of jpgs
+add_filter('jpeg_quality', function($arg){return 100;});
+
+// Adds custom image sizes
+add_image_size( 'mobile-single', 385, 0, false ); // Adds mobile-single image
+add_image_size( 'retina-thumb', 770, 770, true ); // Adds retina-thumb image
+add_image_size( 'retina-single', 770, 0, false ); // Adds retina-single imagew
+
+// Removes medium-large format
+add_filter('intermediate_image_sizes', function($sizes) {
+    return array_diff($sizes, ['medium_large']);
+});
+
+// Removes other wordpress image sizes
+function pj_remove_image_sizes() {
+    remove_image_size( '2048x2048' );
+	remove_image_size( '1536x1536' );
+}
+add_action('init', 'pj_remove_image_sizes');
+
+// Adds menus and thumbnails
 if (function_exists('add_theme_support')) {
 	add_theme_support('menus');
+	add_theme_support( 'post-thumbnails' );
 }
 
 // Code below added by Jacob Charles Wilson to allow for custom logo
@@ -28,62 +98,11 @@ function paperjournal_custom_logo_setup() {
 }
 add_action( 'after_setup_theme', 'paperjournal_custom_logo_setup' );
 
-if ( function_exists( 'add_theme_support' ) ) { // Added in 2.9
-  add_theme_support( 'post-thumbnails' );
-}
-
-add_image_size( 'mobile-home', 300, 300, true ); // Adds mobile-home cropped thumbnail
-add_image_size( 'mobile-single', 300, 0, false ); // Adds mobile-single image
-add_image_size( 'tablet-home', 230, 230, true ); // Adds tablet-home cropped thumbnail
-
-// Sets responsive image size attributes
-function paperjournal_set_image_sizes_attr( $sizes, $size ) {
-	$sizes = '(max-width: 768px) 300px, (max-width: 1259px) 500px, 855px';
-	return $sizes;
-}
-add_filter( 'wp_calculate_image_sizes', 'paperjournal_set_image_sizes_attr', 10 , 2 );
-
-// Add loading attribute to all images
-function paperjournal_set_image_loading_attr($content) {
-    $content = str_replace('<img','<img loading="lazy"', $content);
-    return $content;
-}
-add_filter('the_content','paperjournal_set_image_loading_attr');
-
-// 100% quality of jpgs
-add_filter('jpeg_quality', function($arg){return 100;});
-
-// Enqueue tag manager for all pages 
-function paperjournal_include_js() {
-	wp_enqueue_script( 'tag-manager', get_stylesheet_directory_uri() . '/js/tag-manager.js', array(), null, false);
-}
-add_action('wp_enqueue_scripts', 'paperjournal_include_js');
-
-// Enqueue other scripts on certain pages
-function paperjournal_conditional_js() {
-	// if is singular
-	if(is_singular()) {
-		wp_enqueue_script( 'noframe', get_stylesheet_directory_uri() . '/js/noframe.min.js', array(), '2.2.5', true);
-	}
-	// if is index page
-	if( is_home() || is_archive() || is_search() ) {
-		wp_enqueue_script( 'infinite-scroll', get_stylesheet_directory_uri() . '/js/infinite-scroll.pkgd.min.js', array(), null, true);
-		wp_enqueue_script( 'infinite-init', get_stylesheet_directory_uri() . '/js/infinite-scroll.init.js', array(), null, true);
-	}
-}
-add_action('wp_enqueue_scripts', 'paperjournal_conditional_js');
-
-function paperjournal_remove_js( ){
-//    wp_dequeue_script( 'jquery');
-//    wp_deregister_script( 'jquery');   
-}
-add_filter( 'wp_enqueue_scripts', 'paperjournal_remove_js', PHP_INT_MAX );
-
 // Remove Post Formats
 function paperjournal_remove_formats() {
    remove_theme_support('post-formats');
 }
-add_action('after_setup_theme', 'paperjournal_remove_formats', 100);
+add_action('after_setup_theme', 'paperjournal_remove_formats');
 
 // Remove prepended categories from archive titles
 function paperjournal_archive_title( $title ) {
@@ -98,7 +117,6 @@ function paperjournal_archive_title( $title ) {
     } elseif ( is_tax() ) {
         $title = single_term_title( '', false );
     }
-  
     return $title;
 }
 add_filter( 'get_the_archive_title', 'paperjournal_archive_title' );
@@ -117,7 +135,6 @@ function disable_emojis() {
 add_action( 'init', 'disable_emojis' );
 
 // Filter function used to remove the tinymce emoji plugin.
-
 function disable_emojis_tinymce( $plugins ) {
 	if ( is_array( $plugins ) ) {
 		return array_diff( $plugins, array( 'wpemoji' ) );
@@ -126,6 +143,7 @@ function disable_emojis_tinymce( $plugins ) {
 	}
 }
 
+// Register footer bar
 function paperjournal_widgets_init() {
     register_sidebar( array(
         'name' => __( 'Dynamic Footer', 'paperjournal' ),
@@ -139,75 +157,7 @@ function paperjournal_widgets_init() {
 } 
 add_action( 'widgets_init', 'paperjournal_widgets_init' );
 
-//hook into the init action and call create_writers_taxonomy when it fires
- 
-function create_writers_taxonomy() {
- 
-// Labels part for the GUI
- 
-  $labels = array(
-    'name' => _x( 'Writers', 'taxonomy general name' ),
-    'singular_name' => _x( 'Writer', 'taxonomy singular name' ),
-    'search_items' =>  __( 'Search Writers' ),
-    'popular_items' => __( 'Popular Writers' ),
-    'all_items' => __( 'All Writers' ),
-    'parent_item' => null,
-    'parent_item_colon' => null,
-    'edit_item' => __( 'Edit Writer' ), 
-    'update_item' => __( 'Update Writer' ),
-    'add_new_item' => __( 'Add New Writer' ),
-    'new_item_name' => __( 'New Writer Name' ),
-    'separate_items_with_commas' => __( 'Separate writers with commas' ),
-    'add_or_remove_items' => __( 'Add or remove writers' ),
-    'choose_from_most_used' => __( 'Choose from the most used writers' ),
-    'menu_name' => __( 'Writers' ),
-  ); 
- 
-// Now register the non-hierarchical taxonomy like tag
- 
-  register_taxonomy('writers','post',array(
-    'hierarchical' => false,
-    'labels' => $labels,
-    'show_ui' => false,
-	'show_in_menu' => true,
-	'show_in_rest' => true,
-	'meta_box_cb' => false,
-	'public' => true,
-    'show_admin_column' => true,
-    'update_count_callback' => '_update_post_term_count',
-    'query_var' => true,
-    'rewrite' => array( 'slug' => 'writer' ),
-   	'show_in_nav_menus' => true,
-  ));
-}
-add_action( 'init', 'create_writers_taxonomy', 0 );
-
-// Adds support for Woocommerce
-function paperjournal_add_woocommerce_support() {
-	// add_theme_support( 'woocommerce' );
-}
-add_action( 'after_setup_theme', 'paperjournal_add_woocommerce_support' );
-
-// Unload WooCommerce assets on non WooCommerce pages.
-function paperjournal_conditionally_remove_wc_assets() {
-    // if WooCommerce is not active, abort.
-    if ( ! class_exists( 'WooCommerce' ) ) {
-        return;
-    }
-
-    // if this is a WooCommerce related page, abort.
-    if ( is_woocommerce() || is_cart() || is_checkout() || is_page( array( 'my-account' ) ) ) {
-        return;
-    }
-
-    remove_action( 'wp_enqueue_scripts', [ WC_Frontend_Scripts::class, 'load_scripts' ] );
-    remove_action( 'wp_print_scripts', [ WC_Frontend_Scripts::class, 'localize_printed_scripts' ], 5 );
-    remove_action( 'wp_print_footer_scripts', [ WC_Frontend_Scripts::class, 'localize_printed_scripts' ], 5 );
-
-}
-add_action( 'get_header', 'paperjournal_conditionally_remove_wc_assets' );
-// Ends WooCommerce conditional
-
+// WooCommerce
 // Remove WooCommerce Feedback tab
 function wcs_woo_remove_reviews_tab($tabs) {
     unset($tabs['reviews']);
@@ -228,10 +178,7 @@ function paperjournal_remove_zoom_theme_support() {
 }
 add_action( 'after_setup_theme', 'paperjournal_remove_zoom_theme_support', 100 );
 
-/**
- * Show cart contents / total Ajax
- */
-
+// Show cart contents / total Ajax
 function paperjournal_header_add_to_cart_fragment( $fragments ) {
 	global $woocommerce;
 

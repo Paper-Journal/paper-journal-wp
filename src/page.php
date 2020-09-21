@@ -1,5 +1,4 @@
 <?php get_header(); ?>
-<main class="main">
     <article <?php post_class('single__article'); ?>>
 			<?php if (have_posts()) : while (have_posts()) : the_post(); ?>
 				<header class="single_header">
@@ -17,5 +16,4 @@
 				</section>
 			<?php endif; ?>
     </article>
-</main>
 <?php get_footer(); ?>
