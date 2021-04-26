@@ -15,7 +15,7 @@
 	</div> 
 <?php else : ?>
 		<header class="single_header">
-			<h1 class="top_title">Nothing found</h1>
+			<h1 class="top_title">Nothing Found</h1>
 		</header>
 		<section class="single_content">
 			<p>Sorry, no posts found.</p>
@@ -25,10 +25,10 @@
 <nav class="index-nav no-print">
 	<div class="pagination">
 		<?php if ( get_previous_posts_link() ) : ?>
-			<div class="pagination__newer"><?php previous_posts_link( 'Newer posts' ); ?></div>
+			<div class="pagination__newer button"><?php previous_posts_link( 'Newer posts' ); ?></div>
 		<?php endif; ?>
 		<?php if ( get_next_posts_link() ) : ?>
-			<div class="pagination__older"><?php next_posts_link( 'Older posts' ); ?></div>
+			<div class="pagination__older button"><?php next_posts_link( 'Older posts' ); ?></div>
 		<?php endif; ?>
 	</div>
 	<?php if ( get_next_posts_link() ) : ?>

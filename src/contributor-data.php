@@ -1,4 +1,5 @@
 <?php
+// not in use atm
 foreach( $terms as $term ):
 	// Get values
 //	$display_artists = get_sub_field('show_artists');
@@ -11,7 +12,7 @@ foreach( $terms as $term ):
 	$instagram_url = get_field('instagram', $term);
 	$instagram_username = '@' . str_replace('/','',wp_parse_url( get_field('instagram', $term), 5 )); ?>
 	<section class="contributor">
-		<h3 class="contributor_name"><a class="contributor_archive" href="<?php echo $archive; ?>"><?php echo $name; ?></a></h3>
+		<p class="contributor_name"><a class="contributor_archive" href="<?php echo $archive; ?>"><?php echo $name; ?></a></p>
 		<?php if ( ($description) && ( ( $display_artists == 'Show') || ( $display_writers == 'Show' ) ) ): ?>
 			<p class="contributor_description"><?php echo $description; ?></p>
 		<?php endif; ?>

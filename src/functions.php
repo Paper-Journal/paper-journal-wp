@@ -1,28 +1,57 @@
 <?php
+	
+	// Remove PERSON from JSON-LD as the PERSON is wrong
+	// https://stackoverflow.com/questions/57378946/change-author-id-in-json-ld-schema-generated-by-yoast
+	// https://developer.yoast.com/features/schema/pieces/person/
+	// add_filter( 'wpseo_schema_person_user_id', '__return_false' );
+
+	// Remove from html HEAD
+	remove_action('wp_head', 'rsd_link'); // removes RSD Link from header
+	remove_action('wp_head', 'wlwmanifest_link'); // removes WLW manifest from header
+	remove_action('wp_head', 'wp_generator'); // Removes generator from header - useful for security
+
+function pj_custom_search( $form ) { 
+     $form = '<form role="search" method="get" id="search-form" action="' . home_url( '/' ) . '" ><label class="screen-reader-text" for="s">' . __('',  'domain') . '</label><input type="search" value="' . get_search_query() . '" name="s" id="s" placeholder="Search…" /><input type="submit" id="searchsubmit" value="'. esc_attr__('Go', 'domain') .'" /></form>';
+     return $form;
+}
+add_filter( 'get_search_form', 'pj_custom_search' );
 
 function paperjournal_conditional_js() {
 	
 	// Enqueue tag manager on all pages 
-	wp_enqueue_script( 'tag-manager', get_stylesheet_directory_uri() . '/js/tag-manager.js', array(), null, false);
+//	wp_enqueue_script( 'tag-manager', get_stylesheet_directory_uri() . '/js/tag-manager.js', array(), null, false);
+	
+	if ( ! is_admin() ) {
+		// wp_deregister_script('jquery');
+	}
 	
 	// If IS post or page
 	if( is_singular() ) {
 		// Enqueue noframe only on posts and pages
-		wp_enqueue_script( 'reframe', get_stylesheet_directory_uri() . '/js/reframe.min.js', array(), '3.0.0', true);
+		// wp_enqueue_script( 'reframe', get_stylesheet_directory_uri() . '/js/reframe.min.js', array(), '3.0.0', true);
 	} 
 	
 	// If NOT a post or page
 	if ( ! is_singular() ) {
-		// If not post or page
-		// Dequeue woocommerce blocks if not on a post or page
-		wp_dequeue_style('wc-block-vendors-style');
-		wp_deregister_style( 'wc-block-vendors-style' );
-		wp_dequeue_style('wp-block-library');
-		wp_deregister_style( 'wp-block-library' );
-	//	wp_dequeue_style('block-gallery-frontend');
-	//	wp_deregister_style( 'block-gallery-frontend' );
+		// Remove embed code, nothing is embedded on home
+		wp_dequeue_script( 'wp-embed' );
+			wp_deregister_script( 'wp-embed' );
+		wp_dequeue_script( 'wl-pin-main' );
+			wp_deregister_script( 'wl-pin-main' );
+		
+		// Dequeue gutenberg blocks
+		wp_dequeue_style( 'wp-block-library' ); // WordPress core
+			wp_deregister_style( 'wp-block-library' );
+		wp_dequeue_style( 'wp-block-library-theme' ); // WordPress core
+			wp_deregister_style( 'wp-block-library-theme' );
+		wp_dequeue_style( 'wc-block-style' ); // WooCommerce
+			wp_deregister_style( 'wc-block-style' );
+//		wp_dequeue_style( 'wc-block-editor' ); // WooCommerce
+//			wp_deregister_style( 'wc-block-editor' );
+		wp_dequeue_style( 'storefront-gutenberg-blocks' ); // Storefront theme
+			wp_deregister_style( 'storefront-gutenberg-blocks' );
 	
-		// Enqueue infinite scroll only on index pages
+		// Enqueue infinite scroll
 		wp_enqueue_script( 'infinite-scroll', get_stylesheet_directory_uri() . '/js/infinite-scroll.pkgd.min.js', array(), null, true);
 		wp_enqueue_script( 'infinite-init', get_stylesheet_directory_uri() . '/js/infinite-scroll.init.js', array(), null, true);
 	}
@@ -30,35 +59,43 @@ function paperjournal_conditional_js() {
 	// Dequeue recaptcha if logged in or not on a page
 	if( is_user_logged_in() || ! is_page() ){
 		wp_dequeue_script( 'google-invisible-recaptcha' );
+			wp_deregister_script( 'google-invisible-recaptcha' );
 	}
 	
 	// WooCommerce
 	// Check if WooCommerce plugin is active
 	if( function_exists( 'is_woocommerce' ) ){
 
-		// Check if it's any of WooCommerce page
+		// Check if it's not a WooCommerce page
 		if( ! is_woocommerce() && ! is_cart() && ! is_checkout() && ! is_shop() ) {         
 
 			## Dequeue WooCommerce styles
-			wp_dequeue_style('woocommerce-layout'); 
-			wp_dequeue_style('woocommerce-general'); 
+			wp_dequeue_style('woocommerce-general');
+				wp_deregister_style( 'woocommerce-general' );
+			wp_dequeue_style('woocommerce-layout');
+				wp_deregister_style( 'woocommerce-layout' );
 			wp_dequeue_style('woocommerce-smallscreen');
+				wp_deregister_style( 'woocommerce-smallscreen' );
 
 			## Dequeue WooCommerce scripts
-			wp_dequeue_script('wc-cart-fragments');
 			wp_dequeue_script('woocommerce'); 
-			wp_dequeue_script('wc-add-to-cart'); 
-			wp_deregister_script( 'js-cookie' );
+				wp_deregister_script( 'woocommerce' );
+			wp_dequeue_script('wc-cart-fragments');
+				wp_deregister_script( 'wc-cart-fragments' );
+			wp_dequeue_script('wc-add-to-cart');
+				wp_deregister_script( 'wc-add-to-cart' );
 			wp_dequeue_script( 'js-cookie' );
+				wp_deregister_script( 'js-cookie' );
 			wp_dequeue_script( 'vc_woocommerce-add-to-cart-js' );
+				wp_deregister_script( 'vc_woocommerce-add-to-cart-js' );
 			
 			// Remove paypal
 			wp_dequeue_style('wc-gateway-ppec-frontend');
-			wp_deregister_style( 'wc-gateway-ppec-frontend' );
+				wp_deregister_style( 'wc-gateway-ppec-frontend' );
 		}
 	}
 }
-add_action('wp_enqueue_scripts', 'paperjournal_conditional_js');
+add_action('wp_enqueue_scripts', 'paperjournal_conditional_js', 100);
 
 // 100% quality of jpgs
 add_filter('jpeg_quality', function($arg){return 100;});
@@ -143,8 +180,8 @@ function disable_emojis_tinymce( $plugins ) {
 	}
 }
 
-// Register footer bar
 function paperjournal_widgets_init() {
+	// Register footer bar
     register_sidebar( array(
         'name' => __( 'Dynamic Footer', 'paperjournal' ),
         'id' => 'footer-bar',
@@ -154,136 +191,150 @@ function paperjournal_widgets_init() {
         'before_title' => '<h2 class="footer_box_title">',
         'after_title' => '</h2>',
     ) );
+	
+	 register_sidebar( array(
+        'name' => __( 'Overlay Sidebar', 'paperjournal' ),
+        'id' => 'overlay-bar',
+        'description' => __( 'This appears in the navigation overlay', 'paperjournal' ),
+        'before_widget' => '<section id="%1$s" class="overlay-box %2$s">',
+        'after_widget' => '</section>',
+        'before_title' => '<h2 class="overlay-box-title">',
+        'after_title' => '</h2>',
+    ) );
 } 
 add_action( 'widgets_init', 'paperjournal_widgets_init' );
 
 // WooCommerce
-// Remove WooCommerce Feedback tab
-function wcs_woo_remove_reviews_tab($tabs) {
-    unset($tabs['reviews']);
-    return $tabs;
-}
-add_filter( 'woocommerce_product_tabs', 'wcs_woo_remove_reviews_tab', 98 );
 
-// Remove breadcrumbs
-function woo_remove_wc_breadcrumbs() {
-    remove_action( 'woocommerce_before_main_content', 'woocommerce_breadcrumb', 20, 0 );
-}
-add_action( 'init', 'woo_remove_wc_breadcrumbs' );
+if( function_exists( 'is_woocommerce' ) ){
 
-// Remove product zoom
-function paperjournal_remove_zoom_theme_support() { 
-    remove_theme_support( 'wc-product-gallery-zoom' );
-    remove_theme_support( 'wc-product-gallery-lightbox' );
-}
-add_action( 'after_setup_theme', 'paperjournal_remove_zoom_theme_support', 100 );
-
-// Show cart contents / total Ajax
-function paperjournal_header_add_to_cart_fragment( $fragments ) {
-	global $woocommerce;
-
-	ob_start();
-
-	?>
-	<a class="pj-woocommerce__cart-count" href="<?php echo esc_url(wc_get_cart_url()); ?>" title="<?php _e('View your shopping cart', 'woothemes'); ?>"><?php echo sprintf(_n('%d item', '%d items', $woocommerce->cart->cart_contents_count, 'woothemes'), $woocommerce->cart->cart_contents_count);?> - <?php echo $woocommerce->cart->get_cart_total(); ?></a>
-	<?php
-	$fragments['a.cart-customlocation'] = ob_get_clean();
-	return $fragments;
-}
-add_filter( 'woocommerce_add_to_cart_fragments', 'paperjournal_header_add_to_cart_fragment' );
-
-// Dollar Sign Switcher
-function paperjournal_currency_symbol( $currency_symbol, $currency ) {
-    switch( $currency ) {
-        case 'USD':
-            $currency_symbol = 'USD $';
-            break;
-        case 'NZD':
-            $currency_symbol = 'NZD $';
-            break;
-        case 'AUD':
-            $currency_symbol = 'AUD $';
-            break;
-    }
-    return $currency_symbol;
-}
-add_filter('woocommerce_currency_symbol', 'paperjournal_currency_symbol', 30, 2);
-
-/**
- * Plugin Name: WooCommerce Enable Free Shipping on a Per Product Basis
- * Plugin URI: https://gist.github.com/BFTrick/d4a21524a8f7b25ec296
- * Description: Enable free shipping for certain products
- * Author: Patrick Rauland & eugenf
- * Author URI: http://speakinginbytes.com/
- * Version: 1.0.2
- *
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program. If not, see <http://www.gnu.org/licenses/>.
- *
- */
-if ( ! class_exists( 'WC_Enable_Free_Shipping' ) ) :
-class WC_Enable_Free_Shipping {
-	protected static $instance = null;
-	/**
-	 * Initialize the plugin.
-	 *
-	 * @since 1.0
-	 */
-	private function __construct() {
-		// add our check
-		add_filter( 'woocommerce_shipping_free_shipping_is_available', array( $this, 'patricks_enable_free_shipping' ), 20 );
+	// Remove WooCommerce Feedback tab
+	function wcs_woo_remove_reviews_tab($tabs) {
+		unset($tabs['reviews']);
+		return $tabs;
 	}
-	/**
-	 * Enable free shipping for orders with products that have the free-shipping shipping class slug
-	 *
-	 * @param  bool $is_available
-	 * @return bool
-	 * @since  1.0
-	 */
-	public function patricks_enable_free_shipping( $is_available ) {
+	add_filter( 'woocommerce_product_tabs', 'wcs_woo_remove_reviews_tab', 98 );
+
+	// Remove breadcrumbs
+	function woo_remove_wc_breadcrumbs() {
+		remove_action( 'woocommerce_before_main_content', 'woocommerce_breadcrumb', 20, 0 );
+	}
+	add_action( 'init', 'woo_remove_wc_breadcrumbs' );
+
+	// Remove product zoom
+	function paperjournal_remove_zoom_theme_support() { 
+		remove_theme_support( 'wc-product-gallery-zoom' );
+		remove_theme_support( 'wc-product-gallery-lightbox' );
+	}
+	add_action( 'after_setup_theme', 'paperjournal_remove_zoom_theme_support', 100 );
+
+	// Show cart contents / total Ajax
+	function paperjournal_header_add_to_cart_fragment( $fragments ) {
 		global $woocommerce;
-		// set the shipping classes that are eligible
-		$eligible = array( 'free-shipping' );
-		// get cart contents
-		$cart_items = $woocommerce->cart->get_cart();
-		// loop through the items checking to make sure they all have the right class
-		foreach ( $cart_items as $key => $item ) {
-			if ( ! in_array( $item['data']->get_shipping_class(), $eligible ) ) {
-				// this item doesn't have the right class. return default availability
-				return $is_available;
-			}
-		}
-		// nothing out of the ordinary return true
-		return true;
-	}
-	/**
-	 * Return an instance of this class.
-	 *
-	 * @return object A single instance of this class.
-	 * @since  1.0
-	 */
-	public static function get_instance() {
-		// If the single instance hasn't been set, set it now.
-		if ( null == self::$instance ) {
-			self::$instance = new self;
-		}
-		return self::$instance;
-	}
-}
-add_action( 'init', array( 'WC_Enable_Free_Shipping', 'get_instance' ), 0 );
-endif;
-// ENDS enable free shipping
 
+		ob_start();
+
+		?>
+		<a class="pj-woocommerce__cart-count" href="<?php echo esc_url(wc_get_cart_url()); ?>" title="<?php _e('View your shopping cart', 'woothemes'); ?>"><?php echo sprintf(_n('%d item', '%d items', $woocommerce->cart->cart_contents_count, 'woothemes'), $woocommerce->cart->cart_contents_count);?> - <?php echo $woocommerce->cart->get_cart_total(); ?></a>
+		<?php
+		$fragments['a.cart-customlocation'] = ob_get_clean();
+		return $fragments;
+	}
+	add_filter( 'woocommerce_add_to_cart_fragments', 'paperjournal_header_add_to_cart_fragment' );
+
+	// Dollar Sign Switcher
+	function paperjournal_currency_symbol( $currency_symbol, $currency ) {
+		switch( $currency ) {
+			case 'USD':
+				$currency_symbol = 'USD $';
+				break;
+			case 'NZD':
+				$currency_symbol = 'NZD $';
+				break;
+			case 'AUD':
+				$currency_symbol = 'AUD $';
+				break;
+		}
+		return $currency_symbol;
+	}
+	add_filter('woocommerce_currency_symbol', 'paperjournal_currency_symbol', 30, 2);
+
+	/**
+	 * Plugin Name: WooCommerce Enable Free Shipping on a Per Product Basis
+	 * Plugin URI: https://gist.github.com/BFTrick/d4a21524a8f7b25ec296
+	 * Description: Enable free shipping for certain products
+	 * Author: Patrick Rauland & eugenf
+	 * Author URI: http://speakinginbytes.com/
+	 * Version: 1.0.2
+	 *
+	 * This program is free software: you can redistribute it and/or modify
+	 * it under the terms of the GNU General Public License as published by
+	 * the Free Software Foundation, either version 3 of the License, or
+	 * (at your option) any later version.
+	 *
+	 * This program is distributed in the hope that it will be useful,
+	 * but WITHOUT ANY WARRANTY; without even the implied warranty of
+	 * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+	 * GNU General Public License for more details.
+	 *
+	 * You should have received a copy of the GNU General Public License
+	 * along with this program. If not, see <http://www.gnu.org/licenses/>.
+	 *
+	 */
+	if ( ! class_exists( 'WC_Enable_Free_Shipping' ) ) :
+	class WC_Enable_Free_Shipping {
+		protected static $instance = null;
+		/**
+		 * Initialize the plugin.
+		 *
+		 * @since 1.0
+		 */
+		private function __construct() {
+			// add our check
+			add_filter( 'woocommerce_shipping_free_shipping_is_available', array( $this, 'patricks_enable_free_shipping' ), 20 );
+		}
+		/**
+		 * Enable free shipping for orders with products that have the free-shipping shipping class slug
+		 *
+		 * @param  bool $is_available
+		 * @return bool
+		 * @since  1.0
+		 */
+		public function patricks_enable_free_shipping( $is_available ) {
+			global $woocommerce;
+			// set the shipping classes that are eligible
+			$eligible = array( 'free-shipping' );
+			// get cart contents
+			$cart_items = $woocommerce->cart->get_cart();
+			// loop through the items checking to make sure they all have the right class
+			foreach ( $cart_items as $key => $item ) {
+				if ( ! in_array( $item['data']->get_shipping_class(), $eligible ) ) {
+					// this item doesn't have the right class. return default availability
+					return $is_available;
+				}
+			}
+			// nothing out of the ordinary return true
+			return true;
+		}
+		/**
+		 * Return an instance of this class.
+		 *
+		 * @return object A single instance of this class.
+		 * @since  1.0
+		 */
+		public static function get_instance() {
+			// If the single instance hasn't been set, set it now.
+			if ( null == self::$instance ) {
+				self::$instance = new self;
+			}
+			return self::$instance;
+		}
+	}
+	add_action( 'init', array( 'WC_Enable_Free_Shipping', 'get_instance' ), 0 );
+	endif;
+	// ENDS enable free shipping
+} // ENDS woocommerce exist
+	
 // Remove comments entirely
 add_action('admin_init', function () {
     // Redirect any user trying to access comments page
